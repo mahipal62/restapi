@@ -1,96 +1,94 @@
 package com.myretail.productdetail.service.impl;
 
-
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import com.mongodb.MongoException;
+import com.myretail.productdetail.aspect.AdderAround;
+import com.myretail.productdetail.aspect.LogExecutionTime;
+import com.myretail.productdetail.exception.ProductNotFoundException;
 import com.myretail.productdetail.gateway.TargetProductAPIGateway;
 import com.myretail.productdetail.model.Price;
 import com.myretail.productdetail.model.Product;
 import com.myretail.productdetail.repository.ProductPriceRepository;
 import com.myretail.productdetail.service.ProductInfoService;
 
-
 @Service
-public class ProductInfoServiceImpl implements ProductInfoService{
+public class ProductInfoServiceImpl implements ProductInfoService {
 	private final Logger log = Logger.getLogger(ProductInfoServiceImpl.class.getName());
-	
 
-	
-	@Autowired ProductPriceRepository productPriceRepository;
-	
+	@Autowired
+	ProductPriceRepository productPriceRepository;
+
 	@Autowired
 	TargetProductAPIGateway gateway;
-	
-	public Product getProductInfo(int id) throws  MongoException, HttpClientErrorException{
-		log.info("in  getProductDetails ");
-		log.debug("id: "+id);
+
+	@LogExecutionTime
+	@AdderAround
+	public Product getProductInfo(int id) throws ProductNotFoundException, HttpClientErrorException {
 		String productName = null;
+		Price prodPrice = null;
 		try {
 			productName = gateway.getProductName(id);
 		} catch (Exception e) {
-		log.error("the product is not available in the Target Rest API"+id);
+			log.error("the product is not available in the Target Rest API" + id);
+			if (e instanceof HttpClientErrorException) {
+				throw new HttpClientErrorException(((HttpClientErrorException) e).getStatusCode(),"the product is not available in the Target Rest API=" + id);
+			}
+			throw new ProductNotFoundException("the product is not available in the Target Rest API " + id);
 		}
-		log.debug("productName: "+productName);
-		Price prodPrice=getProductPrice(id);
-		
-		if(prodPrice==null){
-			log.error("product price is not available");
-			throw new MongoException("price details for product with id="+id+" not found in mongo db for collection productprice");
-		}
-		Product prodDetails= new Product(id,productName,prodPrice);
-		log.debug("prodDetails: "+prodDetails);
-		return prodDetails;	
-	}
-	
-	
-	
 
-	public Product updateProductInfo(int id, Product newProduct) throws Exception {
-		log.info("Method putProductDetails begin");
-		log.debug(" newProduct : "+newProduct);
-		if(id!=newProduct.getId()){
-			throw new Exception(" Product price cannot be updated, request body json should have matching id with path variable.");
+		try {
+			prodPrice = getProductPrice(id);
+
+			if (prodPrice == null) {
+				log.error("product price is not available");
+				throw new ProductNotFoundException("price details for product with id=" + id + " not found");
+			}
+		} catch (Exception e) {
+			throw new ProductNotFoundException("price details for product with id=" + id + " not found");
 		}
-		Price newProductPrice=newProduct.getPrice();
-		if(newProduct.getPrice().getCurrencyCode()==null||newProduct.getPrice().getPrice()==null){
-				throw new Exception(" Please check product price and currency code details, it should not be empty ");
+
+		Product prodDetails = new Product(id, productName, prodPrice);
+		return prodDetails;
+	}
+
+	@LogExecutionTime
+	@AdderAround
+	public Product updateProductInfo(int id, Product newProduct) throws Exception {
+		if (id != newProduct.getId()) {
+			throw new Exception(
+					" Product price cannot be updated, request body json should have matching id with path variable.");
+		}
+		Price newProductPrice = newProduct.getPrice();
+		if (newProduct.getPrice().getCurrencyCode() == null || newProduct.getPrice().getPrice() == null) {
+			throw new Exception(" Please check product price and currency code details, it should not be empty ");
 		}
 		newProductPrice.setId(id);
-		String productName=gateway.getProductName(id);
+		newProductPrice = updateProductPrice(id, newProduct);
+		String productName = gateway.getProductName(id);
 		newProduct.setName(productName);
-		newProductPrice=updateProductPrice(id,newProduct);
-		
 		newProduct.setPrice(newProductPrice);
-		log.info("Method putProductDetails end");
 		return newProduct;
 	}
-	
-	
-	
-	
-	public Price getProductPrice(int productId) throws MongoException{
-		log.info("Method getProductPrice begin");
-		log.debug("id : "+productId);
-		Price prodPrice=productPriceRepository.findById(productId);
-		log.debug("prodPrice : "+prodPrice);
+
+	public Price getProductPrice(int productId) throws MongoException {
+		Price prodPrice = productPriceRepository.findById(productId);
 		return prodPrice;
 	}
-	
-	public Price updateProductPrice(int prodductId,Product product) throws MongoException{
-		log.info("updateProductPrice Enter");
-		Price newProductPrice=product.getPrice();
+
+	@AdderAround
+	public Price updateProductPrice(int prodductId, Product product) throws ProductNotFoundException {
+		Price newProductPrice = product.getPrice();
 		newProductPrice.setId(prodductId);
-		if(getProductPrice(prodductId)!=null){
-			newProductPrice=productPriceRepository.save(product.getPrice());
-		}else{
+		if (getProductPrice(prodductId) != null) {
+			newProductPrice = productPriceRepository.save(product.getPrice());
+		} else {
 			log.error("price detail null mongo exception thrown");
-			throw new MongoException("price details for product with id="+prodductId+" not found in mongo db for collection 'productprice'");
+			throw new ProductNotFoundException("price details cannot be updated because the details for the product with id=" + prodductId+ " not found in mongo db");
 		}
-		log.debug("newProductPrice : "+newProductPrice);
-		log.info("Method getProductPrice end");
 		return newProductPrice;
 	}
 }

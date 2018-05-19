@@ -35,38 +35,40 @@ public class ProductControllerTest {
 	
     @MockBean
     private  ProductInfoService productInfoService;
-	
-    private int MOVIE_ID=13860428;
+    private static final int PRODUCT_ID =13860428;
+    private static final String CURRENCY_US="USD";
+    private static final String CURRENCY_UK="EURO";
+    private static final String PRODUCT_NAME="The Big Lebowski (Blu-ray)";
+    private static final String EXPECTED_JSON_STR_US="{\"id\":13860428,\"name\":\"The Big Lebowski (Blu-ray)\",\"price\":{\"price\":100,\"currencyCode\":\"USD\"}}";
+    private static final String PRODUCT_ID_TEST="TEST";
+    private static final String UPDATED_JSON_STR_UK="{\"id\":13860428,\"name\":\"The Big Lebowski (Blu-ray)\",\"productPrice\":{\"price\":150,\"currencyCode\":\"EURO\"}}";
 
 	Product prodDetail=null;
 	Price prodPrice= new Price();
 	@Before
 	public void setup() {
-		prodPrice.setId(MOVIE_ID);
-		prodPrice.setCurrencyCode("USD");
+		prodPrice.setId(PRODUCT_ID);
+		prodPrice.setCurrencyCode(CURRENCY_US);
 		prodPrice.setPrice(new BigDecimal(100));
-		prodDetail= new Product(MOVIE_ID,"The Big Lebowski (Blu-ray)",prodPrice);
+		prodDetail= new Product(PRODUCT_ID,PRODUCT_NAME,prodPrice);
 	}
 	
 	
 	@Test
 	public void getProductDetailsTest() throws Exception {
-		Mockito.when(productInfoService.getProductInfo(MOVIE_ID)).thenReturn(prodDetail);
+		Mockito.when(productInfoService.getProductInfo(PRODUCT_ID)).thenReturn(prodDetail);
 		RequestBuilder requestBuilder = MockMvcRequestBuilders.get(
-				"/product/"+MOVIE_ID).accept(
+				"/product/"+PRODUCT_ID).accept(
 				MediaType.APPLICATION_JSON);
 		MvcResult result = mockMvc.perform(requestBuilder).andReturn();
-		String expected = "{\"id\":13860428,\"name\":\"The Big Lebowski (Blu-ray)\",\"price\":{\"price\":100,\"currencyCode\":\"USD\"}}";
-		JSONAssert.assertEquals(expected, result.getResponse()
-				.getContentAsString(), false);
+		String expected = EXPECTED_JSON_STR_US;
+		JSONAssert.assertEquals(expected, result.getResponse().getContentAsString(), false);
 	}
 	
 	@Test(expected = MethodArgumentTypeMismatchException.class)
 	public void getProductDetailsInvalidRequestTest() throws Exception,MethodArgumentTypeMismatchException {
-		String productId="ABC123";
-		RequestBuilder requestBuilder = MockMvcRequestBuilders.get(
-				"/product/"+productId).accept(
-				MediaType.APPLICATION_JSON);
+		
+		RequestBuilder requestBuilder = MockMvcRequestBuilders.get("/product/"+PRODUCT_ID_TEST).accept(MediaType.APPLICATION_JSON);
 		MvcResult result = mockMvc.perform(requestBuilder).andReturn();
 		Assert.assertEquals(HttpStatus.BAD_REQUEST.value(),result.getResponse().getStatus());
 			throw 	result.getResolvedException();
@@ -74,17 +76,17 @@ public class ProductControllerTest {
 	
 	@Test
 	public void updateProductDetailsTest() throws Exception{
-		Price prodPrice1= new Price();
-		prodPrice1.setId(MOVIE_ID);
-		prodPrice1.setCurrencyCode("Rupee");
-		prodPrice1.setPrice(new BigDecimal(150));
-		Product prodDetails1= new Product(MOVIE_ID,"The Big Lebowski (Blu-ray)",prodPrice1);
+		Price prodPriceNew= new Price();
+		prodPriceNew.setId(PRODUCT_ID);
+		prodPriceNew.setCurrencyCode(CURRENCY_UK);
+		prodPriceNew.setPrice(new BigDecimal(150));
+		Product prodDetails1= new Product(PRODUCT_ID,PRODUCT_NAME,prodPriceNew);
 		
-		Mockito.when(productInfoService.updateProductInfo(MOVIE_ID, prodDetails1)).thenReturn(prodDetails1);
+		Mockito.when(productInfoService.updateProductInfo(PRODUCT_ID, prodDetails1)).thenReturn(prodDetails1);
 		RequestBuilder requestBuilder = MockMvcRequestBuilders.put(
-				"/product/"+MOVIE_ID)
+				"/product/"+PRODUCT_ID)
 				.accept(MediaType.APPLICATION_JSON)
-				.content("{\"id\":"+MOVIE_ID+",\"name\":\"The Big Lebowski (Blu-ray)\",\"productPrice\":{\"price\":150,\"currencyCode\":\"Rupee\"}}")
+				.content(UPDATED_JSON_STR_UK)
 				.contentType(MediaType.APPLICATION_JSON_VALUE);
 		
 		MvcResult result = mockMvc.perform(requestBuilder).andReturn();

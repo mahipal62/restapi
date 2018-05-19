@@ -10,6 +10,8 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.myretail.productdetail.aspect.AdderAround;
+import com.myretail.productdetail.aspect.LogExecutionTime;
 import com.myretail.productdetail.constant.ProductInfoServiceConstant;
 import com.myretail.productdetail.gateway.TargetProductAPIGateway;
 
@@ -21,17 +23,17 @@ public class TargetProductAPIGatewayImpl implements TargetProductAPIGateway {
 	
 	@Autowired
     private Environment environment;
+	
+	 @LogExecutionTime
+	 @AdderAround
 	public String getProductName(int producId) throws Exception {
-		
-		String url=	environment.getProperty("target.api.url")+producId+environment.getProperty("target.api.url.param");
-			ResponseEntity<String> response= template.getForEntity(url, String.class);
+		 String productName="";
+		 try {
+		ResponseEntity<String> response= template.getForEntity(getServiceUrl(producId), String.class);
 			ObjectMapper mapper = new ObjectMapper();
-			String productName="";
-			try {
 				JsonNode root=null;
 				String jsonString=response.getBody();
-				if(jsonString!=null||!"".equals(jsonString)){
-					log.info(jsonString);
+				if(jsonString!=null||!ProductInfoServiceConstant.SPACE.equals(jsonString)){
 					root = mapper.readTree(jsonString);
 					if(root.findValue(ProductInfoServiceConstant.PRODUCT)!=null){
 						root=root.findValue(ProductInfoServiceConstant.PRODUCT);
@@ -53,6 +55,15 @@ public class TargetProductAPIGatewayImpl implements TargetProductAPIGateway {
 			}
 			return productName;
 		}
+
+	private String getServiceUrl(int producId) {
+		
+		StringBuilder builder = new StringBuilder();
+		builder.append(environment.getProperty(ProductInfoServiceConstant.TARGET_API_URL));
+		builder.append(producId);
+		builder.append(environment.getProperty(ProductInfoServiceConstant.TARGET_API_URL_PARAM));
+		return builder.toString();
+	}
 	
 	
 
