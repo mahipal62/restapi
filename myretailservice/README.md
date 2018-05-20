@@ -6,29 +6,33 @@
 <body>
   
   
-My Retail Service API Documentation
->Setup Instructions: 
-1.	Install MongoDB in your system - https://docs.mongodb.com/manual/installation/
-2.	Run MongoDB - Run 'mongod.exe' in order to start Mongodb
-3.	Clone the code from git repository - https://github.com/mahipal62/restapi.git 
-4.	Build the project using maven clean install
-5.	Get the generated jar from project target folder and run on the Tomcat Instance.
+# My Retail Service API Documentation
+# Setup Instructions: 
+ 1.	Install MongoDB in your system - https://docs.mongodb.com/manual/installation/
+ 2.	Run MongoDB - Run 'mongod.exe' in order to start Mongodb
+ 3.	Clone the code from git repository - https://github.com/mahipal62/restapi.git 
+ 4.	Build the project using mvn clean install
+ 5.	Get the generated jar from project target folder and run on the Tomcat Instance.
       -	To run on the Tomcat Instance->Open Terminal and go the JAR location and run the following command
       -	java -jar myretailservice-0.0.1-SNAPSHOT.jar
-6.	Open browser and visit Swagger. http://localhost:8082/swagger-ui.html
-7.	Test the service using swagger or postman
+ 6.	Open browser and visit Swagger. http://localhost:8082/swagger-ui.html
+ 7.	Test the service using swagger or postman
 
->	Technologies:
+# Technologies:
   •	Java 8
+  
   •	Maven-3.2
+  
   •	Spring boot-1.5.3
+  
   •	AOP-4.3.8
+  
   •	Swagger-2.7.0
+  
   •	MongoDB
 
  
-
-> Operation 1: Retrieve the product information by Product ID:
+# Operation 1: Retrieve the product information by Product ID:
 
 <table >
 
@@ -61,7 +65,7 @@ My Retail Service API Documentation
   <tr>
     <td>Success Response</td>
     <td>Code: 200
-Content: {
+Content:{
     "id": 13860428,
     "name": "The Big Lebowski (Blu-ray)",
     "price": {
@@ -88,7 +92,7 @@ Content: {
   </tr>
 </table>
 
->Operation 2: Update the price information in the database
+# Operation 2: Update the price information in the database
 
 <table >
 
@@ -163,7 +167,7 @@ body={ { "id": 13860428, "price": { "price": 128.00, "currencyCode": "EURO" } } 
   </tr>
 </table>
 
->Response Codes 
+# Response Codes 
 
 •	200 OK - the request was successful.
 
