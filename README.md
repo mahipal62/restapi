@@ -11,7 +11,7 @@
  1.	Install MongoDB in your system - https://docs.mongodb.com/manual/installation/
  2.	Run MongoDB - Run 'mongod.exe' in order to start Mongodb
  3.	Clone the code from git repository - https://github.com/mahipal62/restapi.git 
- 4.	Build the project using maven clean install
+ 4.	Build the project using mvn clean install
  5.	Get the generated jar from project target folder and run on the Tomcat Instance.
      -	To run on the Tomcat Instance->Open Terminal and go the JAR location and run the following command
      -	java -jar myretailservice-0.0.1-SNAPSHOT.jar
